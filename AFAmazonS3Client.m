@@ -37,8 +37,8 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
                        file:(NSString *)path
                  parameters:(NSDictionary *)parameters
                    progress:(void (^)(NSInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite))progressBlock
-                    success:(void (^)(id responseObject))success
-                    failure:(void (^)(NSError *error))failure;
+                    success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
+                    failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure;
 @end
 
 @implementation AFAmazonS3Client
@@ -93,26 +93,18 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 - (void)enqueueS3RequestOperationWithMethod:(NSString *)method
                                        path:(NSString *)path
                                  parameters:(NSDictionary *)parameters
-                                    success:(void (^)(id responseObject))success
-                                    failure:(void (^)(NSError *error))failure
+                                    success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
+                                    failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
 {
     NSURLRequest *request = [self requestWithMethod:method path:path parameters:parameters];
-    AFHTTPRequestOperation *requestOperation = [self HTTPRequestOperationWithRequest:request success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        if (success) {
-            success(responseObject);
-        }
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        if (failure) {
-            failure(error);
-        }
-    }];
+    AFHTTPRequestOperation *requestOperation = [self HTTPRequestOperationWithRequest:request success:success failure:failure];
 
     [self enqueueHTTPRequestOperation:requestOperation];
 }
 
 #pragma mark - Service Operations
 
-- (void)getServiceWithSuccess:(void (^)(id responseObject))success
+- (void)getServiceWithsuccess:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
                       failure:(void (^)(NSError *error))failure
 {
     [self enqueueS3RequestOperationWithMethod:@"GET" path:@"/" parameters:nil success:success failure:failure];
@@ -121,7 +113,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 #pragma mark - Bucket Operations
 
 - (void)getBucket:(NSString *)bucket
-          success:(void (^)(id responseObject))success
+          success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
           failure:(void (^)(NSError *error))failure
 {
     [self enqueueS3RequestOperationWithMethod:@"GET" path:bucket parameters:nil success:success failure:failure];
@@ -129,7 +121,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 
 - (void)putBucket:(NSString *)bucket
        parameters:(NSDictionary *)parameters
-          success:(void (^)(id responseObject))success
+          success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
           failure:(void (^)(NSError *error))failure
 {
     [self enqueueS3RequestOperationWithMethod:@"PUT" path:bucket parameters:parameters success:success failure:failure];
@@ -137,7 +129,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 }
 
 - (void)deleteBucket:(NSString *)bucket
-             success:(void (^)(id responseObject))success
+             success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
              failure:(void (^)(NSError *error))failure
 {
     [self enqueueS3RequestOperationWithMethod:@"DELETE" path:bucket parameters:nil success:success failure:failure];
@@ -146,7 +138,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 #pragma mark - Object Operations
 
 - (void)headObjectWithPath:(NSString *)path
-                   success:(void (^)(id responseObject))success
+                   success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
                    failure:(void (^)(NSError *error))failure
 {
     [self enqueueS3RequestOperationWithMethod:@"HEAD" path:path parameters:nil success:success failure:failure];
@@ -154,19 +146,14 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 
 - (void)getObjectWithPath:(NSString *)path
                  progress:(void (^)(NSInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead))progress
-                  success:(void (^)(id responseObject, NSData *responseData))success
+                  success:(void (^)(AFHTTPRequestOperation *operation, id responseObject, NSData *responseData))success
                   failure:(void (^)(NSError *error))failure
 {
     NSURLRequest *request = [self requestWithMethod:@"GET" path:path parameters:nil];
     AFHTTPRequestOperation *requestOperation = [self HTTPRequestOperationWithRequest:request success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        if (success) {
-            success(responseObject, operation.responseData);
-        }
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        if (failure) {
-            failure(error);
-        }
-    }];
+      if(success)
+        success(operation, responseObject, operation.responseData);
+    } failure:failure];
 
     [requestOperation setUploadProgressBlock:progress];
 
@@ -176,19 +163,11 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 - (void)getObjectWithPath:(NSString *)path
              outputStream:(NSOutputStream *)outputStream
                  progress:(void (^)(NSInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead))progress
-                  success:(void (^)(id responseObject))success
+                  success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
                   failure:(void (^)(NSError *error))failure
 {
     NSURLRequest *request = [self requestWithMethod:@"GET" path:path parameters:nil];
-    AFHTTPRequestOperation *requestOperation = [self HTTPRequestOperationWithRequest:request success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        if (success) {
-            success(responseObject);
-        }
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        if (failure) {
-            failure(error);
-        }
-    }];
+    AFHTTPRequestOperation *requestOperation = [self HTTPRequestOperationWithRequest:request success:success failure:failure];
 
     [requestOperation setUploadProgressBlock:progress];
     [requestOperation setOutputStream:outputStream];
@@ -199,7 +178,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 - (void)postObjectWithFile:(NSString *)path
                 parameters:(NSDictionary *)parameters
                   progress:(void (^)(NSInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite))progress
-                   success:(void (^)(id responseObject))success
+                   success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
                    failure:(void (^)(NSError *error))failure
 {
     [self setObjectWithMethod:@"POST" file:path parameters:parameters progress:progress success:success failure:failure];
@@ -208,14 +187,14 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 - (void)putObjectWithFile:(NSString *)path
                parameters:(NSDictionary *)parameters
                  progress:(void (^)(NSInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite))progress
-                  success:(void (^)(id responseObject))success
+                  success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
                   failure:(void (^)(NSError *error))failure
 {
     [self setObjectWithMethod:@"PUT" file:path parameters:parameters progress:progress success:success failure:failure];
 }
 
 - (void)deleteObjectWithPath:(NSString *)path
-                     success:(void (^)(id responseObject))success
+                     success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
                      failure:(void (^)(NSError *error))failure
 {
     [self enqueueS3RequestOperationWithMethod:@"DELETE" path:path parameters:nil success:success failure:failure];
@@ -225,7 +204,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
                        file:(NSString *)path
         parameters:(NSDictionary *)parameters
                    progress:(void (^)(NSInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite))progress
-                    success:(void (^)(id responseObject))success
+                    success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
                     failure:(void (^)(NSError *error))failure
 {
     NSMutableURLRequest *fileRequest = [NSMutableURLRequest requestWithURL:[NSURL fileURLWithPath:path]];
@@ -240,15 +219,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
             [formData appendPartWithFileData:data name:@"file" fileName:[path lastPathComponent] mimeType:[response MIMEType]];
         }];
 
-        AFHTTPRequestOperation *requestOperation = [self HTTPRequestOperationWithRequest:request success:^(AFHTTPRequestOperation *operation, id responseObject) {
-            if (success) {
-                success(responseObject);
-            }
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            if (failure) {
-                failure(error);
-            }
-        }];
+        AFHTTPRequestOperation *requestOperation = [self HTTPRequestOperationWithRequest:request success:success failure:failure];
 
         [requestOperation setUploadProgressBlock:progress];
 
