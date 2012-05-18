@@ -104,8 +104,8 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 
 #pragma mark - Service Operations
 
-- (void)getServiceWithsuccess:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
-                      failure:(void (^)(NSError *error))failure
+- (void)getServiceWithSuccess:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
+                      failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
 {
     [self enqueueS3RequestOperationWithMethod:@"GET" path:@"/" parameters:nil success:success failure:failure];
 }
@@ -114,7 +114,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 
 - (void)getBucket:(NSString *)bucket
           success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
-          failure:(void (^)(NSError *error))failure
+          failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
 {
     [self enqueueS3RequestOperationWithMethod:@"GET" path:bucket parameters:nil success:success failure:failure];
 }
@@ -122,7 +122,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 - (void)putBucket:(NSString *)bucket
        parameters:(NSDictionary *)parameters
           success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
-          failure:(void (^)(NSError *error))failure
+          failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
 {
     [self enqueueS3RequestOperationWithMethod:@"PUT" path:bucket parameters:parameters success:success failure:failure];
 
@@ -130,7 +130,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 
 - (void)deleteBucket:(NSString *)bucket
              success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
-             failure:(void (^)(NSError *error))failure
+             failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
 {
     [self enqueueS3RequestOperationWithMethod:@"DELETE" path:bucket parameters:nil success:success failure:failure];
 }
@@ -139,7 +139,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 
 - (void)headObjectWithPath:(NSString *)path
                    success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
-                   failure:(void (^)(NSError *error))failure
+                   failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
 {
     [self enqueueS3RequestOperationWithMethod:@"HEAD" path:path parameters:nil success:success failure:failure];
 }
@@ -147,7 +147,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
 - (void)getObjectWithPath:(NSString *)path
                  progress:(void (^)(NSInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead))progress
                   success:(void (^)(AFHTTPRequestOperation *operation, id responseObject, NSData *responseData))success
-                  failure:(void (^)(NSError *error))failure
+                  failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
 {
     NSURLRequest *request = [self requestWithMethod:@"GET" path:path parameters:nil];
     AFHTTPRequestOperation *requestOperation = [self HTTPRequestOperationWithRequest:request success:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -164,7 +164,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
              outputStream:(NSOutputStream *)outputStream
                  progress:(void (^)(NSInteger bytesRead, long long totalBytesRead, long long totalBytesExpectedToRead))progress
                   success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
-                  failure:(void (^)(NSError *error))failure
+                  failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
 {
     NSURLRequest *request = [self requestWithMethod:@"GET" path:path parameters:nil];
     AFHTTPRequestOperation *requestOperation = [self HTTPRequestOperationWithRequest:request success:success failure:failure];
@@ -179,7 +179,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
                 parameters:(NSDictionary *)parameters
                   progress:(void (^)(NSInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite))progress
                    success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
-                   failure:(void (^)(NSError *error))failure
+                   failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
 {
     [self setObjectWithMethod:@"POST" file:path parameters:parameters progress:progress success:success failure:failure];
 }
@@ -188,14 +188,14 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
                parameters:(NSDictionary *)parameters
                  progress:(void (^)(NSInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite))progress
                   success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
-                  failure:(void (^)(NSError *error))failure
+                  failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
 {
     [self setObjectWithMethod:@"PUT" file:path parameters:parameters progress:progress success:success failure:failure];
 }
 
 - (void)deleteObjectWithPath:(NSString *)path
                      success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
-                     failure:(void (^)(NSError *error))failure
+                     failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
 {
     [self enqueueS3RequestOperationWithMethod:@"DELETE" path:path parameters:nil success:success failure:failure];
 }
@@ -205,7 +205,7 @@ NSString * const kAFAmazonS3BucketBaseURLFormatString = @"http://%@.s3.amazonaws
         parameters:(NSDictionary *)parameters
                    progress:(void (^)(NSInteger bytesWritten, long long totalBytesWritten, long long totalBytesExpectedToWrite))progress
                     success:(void (^)(AFHTTPRequestOperation *operation, id responseObject))success
-                    failure:(void (^)(NSError *error))failure
+                    failure:(void (^)(AFHTTPRequestOperation *operation, NSError *error))failure
 {
     NSMutableURLRequest *fileRequest = [NSMutableURLRequest requestWithURL:[NSURL fileURLWithPath:path]];
     [fileRequest setCachePolicy:NSURLCacheStorageNotAllowed];
